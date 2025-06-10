@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Neon Green Auth UI</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <!-- Fonts -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600&display=swap');
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: #121212;
+      font-family: 'SF Pro Display', sans-serif, Arial, sans-serif;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+    #auth-container {
+      width: 320px;
+      background: #1e1e1e;
+      border-radius: 18px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      padding: 24px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: all 0.5s ease;
+    }
+    input {
+      padding: 14px 18px;
+      border-radius: 16px;
+      border: none;
+      font-size: 1rem;
+      background: #2a2a2a;
+      color: white;
+      transition: background-color 0.3s ease;
+    }
+    input:focus {
+      outline: none;
+      background: #383838;
+      box-shadow: 0 0 8px 1.5px #39FF14;
+    }
+    button {
+      padding: 14px 20px;
+      border-radius: 18px;
+      border: none;
+      font-size: 1.1rem;
+      font-weight: 600;
+      background: #39FF14;
+      color: #000;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.15s ease, box-shadow 0.3s ease;
+      user-select: none;
+      box-shadow: 0 0 8px 1.5px rgba(57, 255, 20, 0.8);
+    }
+    button:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 12px 3px rgba(57, 255, 20, 1);
+    }
+    button:active {
+      transform: scale(1.12);
+      box-shadow: 0 0 18px 4px rgba(57, 255, 20, 1);
+    }
+    .forgot-link {
+      font-size: 0.75rem;
+      color: #7a7a7a;
+      text-align: left;
+      cursor: pointer;
+      margin-top: 2px;
+      margin-bottom: 10px;
+      width: fit-content;
+      transition: color 0.3s ease;
+      user-select: none;
+    }
+    .forgot-link:hover {
+      color: #39FF14;
+    }
+    .toggle-container {
+      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #2c2c2c;
+      border-radius: 18px;
+      padding: 6px;
+      margin-bottom: 18px;
+      overflow: hidden;
+      user-select: none;
+    }
+    .toggle-slider {
+      position: absolute;
+      top: 6px;
+      bottom: 6px;
+      left: 6px;
+      width: calc(50% - 12px);
+      background: #39FF14;
+      border-radius: 18px;
+      z-index: 0;
+      transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 14px 3px rgba(57, 255, 20, 0.8);
+    }
+    .toggle-container.signup .toggle-slider {
+      left: calc(50% + 6px);
+    }
+    .toggle-container span {
+      flex: 1;
+      text-align: center;
+      padding: 12px 0;
+      border-radius: 18px;
+      cursor: pointer;
+      z-index: 1;
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: color 0.3s ease;
+      user-select: none;
+      color: #bbb;
+      white-space: nowrap;
+    }
+    .toggle-container span.active {
+      color: #000;
+      transition: color 0.3s ease 0.2s;
+    }
+    .or-divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 18px 0;
+      font-size: 0.8rem;
+      color: #888;
+      user-select: none;
+    }
+    .or-divider::before,
+    .or-divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #444;
+      margin: 0 14px;
+    }
+    .google-btn {
+      background: white;
+      color: black;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      border-radius: 20px;
+      padding: 14px 24px;
+      cursor: pointer;
+      box-shadow: 0 0 8px 1.5px rgba(255,255,255,0.8);
+      transition: transform 0.2s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+      user-select: none;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .google-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 14px 3px rgba(255, 255, 255, 1);
+    }
+    .google-btn:active {
+      transform: scale(1.12);
+      box-shadow: 0 0 20px 6px rgba(255, 255, 255, 1);
+    }
+    .google-btn img {
+      height: 22px;
+      width: 22px;
+      object-fit: contain;
+      display: block;
+      vertical-align: middle;
+      user-select: none;
+    }
+    #status-screen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #121212cc;
+      color: white;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      z-index: 999;
+      user-select: none;
+    }
+    #status-message {
+      margin-bottom: 20px;
+      font-size: 1.3rem;
+      animation: fadeIn 0.5s ease-in-out;
+      text-align: center;
+      padding: 0 20px;
+      max-width: 90vw;
+    }
+    #backButton {
+      padding: 12px 28px;
+      border-radius: 18px;
+      border: none;
+      background: #39FF14;
+      color: black;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      user-select: none;
+      box-shadow: 0 0 8px 1.5px rgba(57, 255, 20, 0.8);
+      transition: transform 0.2s ease, box-shadow 0.3s ease;
+    }
+    #backButton:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 14px 3px rgba(57, 255, 20, 1);
+    }
+    #backButton:active {
+      transform: scale(1.1);
+      box-shadow: 0 0 18px 4px rgba(57, 255, 20, 1);
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="auth-container" role="main" aria-label="Authentication container">
+    <div class="toggle-container" id="toggleContainer" role="tablist" aria-label="Authentication mode toggle">
+      <div class="toggle-slider" id="toggleSlider" aria-hidden="true"></div>
+      <span id="loginToggle" class="active" role="tab" tabindex="0" aria-selected="true" aria-controls="loginPanel">Log In</span>
+      <span id="signupToggle" role="tab" tabindex="-1" aria-selected="false" aria-controls="signupPanel">Sign Up</span>
+    </div>
+    <input id="email" type="email" placeholder="Email" autocomplete="email" aria-label="Email address" />
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password" aria-label="Password" />
+    <input id="verifyPassword" type="password" placeholder="Re-enter Password" autocomplete="new-password" aria-label="Verify Password" style="display:none;" />
+    <div class="forgot-link" id="forgotLink" role="button" tabindex="0" aria-label="Forgot password link">Forgot password?</div>
+    <button id="mainAction" type="button" aria-live="polite">Sign In</button>
+    <div class="or-divider" aria-hidden="true">or</div>
+    <button class="google-btn" id="googleButton" type="button" aria-label="Sign in with Google">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"  alt="Google logo" />
+      Sign In with Google
+    </button>
+  </div>
+
+  <div id="status-screen" role="alertdialog" aria-modal="true" aria-labelledby="status-message" tabindex="-1">
+    <div id="status-message"></div>
+    <button id="backButton" type="button">Back</button>
+  </div>
+
+  <script>
+    // 🔁 Replace with YOUR Firebase config from Firebase Console
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "your-project-id.firebaseapp.com",
+      projectId: "your-project-id",
+      storageBucket: "your-project-id.appspot.com",
+      messagingSenderId: "your-sender-id",
+      appId: "your-app-id"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // DOM Elements
+    const mainAction = document.getElementById('mainAction');
+    const googleButton = document.getElementById('googleButton');
+    const forgotLink = document.getElementById('forgotLink');
+    const verifyPassword = document.getElementById('verifyPassword');
+
+    let mode = 'login';
+
+    function switchMode(newMode) {
+      if (mode === newMode) return;
+      mode = newMode;
+      updateUIForMode();
+    }
+
+    function updateUIForMode() {
+      if (mode === 'login') {
+        mainAction.textContent = 'Sign In';
+        googleButton.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"  alt="Google logo" />Sign In with Google';
+        toggleContainer.classList.remove('signup');
+        loginToggle.classList.add('active');
+        signupToggle.classList.remove('active');
+        verifyPassword.style.display = 'none';
+        forgotLink.style.display = 'block';
+      } else {
+        mainAction.textContent = 'Sign Up';
+        googleButton.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"  alt="Google logo" />Sign Up with Google';
+        toggleContainer.classList.add('signup');
+        signupToggle.classList.add('active');
+        loginToggle.classList.remove('active');
+        verifyPassword.style.display = 'block';
+        forgotLink.style.display = 'none';
+      }
+    }
+
+    // Send messages back to Construct 3
+    function sendToConstruct(message) {
+      try {
+        window.parent.postMessage({ source: "firebase-login", ...message }, "*");
+      } catch (e) {
+        console.warn("Could not postMessage to parent:", e);
+      }
+    }
+
+    // Handle Email Login / Sign-Up
+    mainAction.addEventListener('click', () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (mode === 'login') {
+        auth.signInWithEmailAndPassword(email, password)
+          .then((userCredential) => {
+            sendToConstruct({
+              event: "login-success",
+              user: userCredential.user.email
+            });
+          })
+          .catch((error) => {
+            sendToConstruct({
+              event: "login-error",
+              message: error.message
+            });
+          });
+      } else {
+        const verifyPasswordVal = document.getElementById('verifyPassword').value;
+        if (password !== verifyPasswordVal) {
+          showStatus("Passwords don't match.");
+          return;
+        }
+
+        auth.createUserWithEmailAndPassword(email, password)
+          .then((userCredential) => {
+            sendToConstruct({
+              event: "signup-success",
+              user: userCredential.user.email
+            });
+          })
+          .catch((error) => {
+            sendToConstruct({
+              event: "signup-error",
+              message: error.message
+            });
+          });
+      }
+    });
+
+    // Handle Google Sign-In
+    googleButton.addEventListener('click', () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then((result) => {
+          sendToConstruct({
+            event: "login-success",
+            user: result.user.email
+          });
+        })
+        .catch((error) => {
+          sendToConstruct({
+            event: "login-error",
+            message: error.message
+          });
+        });
+    });
+
+    // Utility functions
+    function resetPassword() {
+      const email = document.getElementById('email').value.trim();
+      if (!email) {
+        showStatus('Please enter your email to reset your password.');
+        return;
+      }
+      auth.sendPasswordResetEmail(email)
+        .then(() => {
+          showStatus(`Password reset email sent to ${email}`);
+        })
+        .catch((error) => {
+          showStatus(`Error sending reset email: ${error.message}`);
+        });
+    }
+
+    function showStatus(message) {
+      document.getElementById('status-message').textContent = message;
+      document.getElementById('status-screen').style.display = 'flex';
+    }
+
+    function animateClickButton(button) {
+      button.style.transform = 'scale(1.12)';
+      button.style.boxShadow = button.id === 'googleButton'
+        ? '0 0 20px 6px rgba(255, 255, 255, 1)'
+        : '0 0 18px 4px rgba(57, 255, 20, 1)';
+      setTimeout(() => {
+        button.style.transform = '';
+        button.style.boxShadow = '';
+      }, 150);
+    }
+
+    // Toggle Mode Logic
+    const loginToggle = document.getElementById('loginToggle');
+    const signupToggle = document.getElementById('signupToggle');
+    const toggleSlider = document.getElementById('toggleSlider');
+
+    loginToggle.onclick = () => switchMode('login');
+    signupToggle.onclick = () => switchMode('signup');
+
+    updateUIForMode();
+  </script>
+</body>
+</html>
